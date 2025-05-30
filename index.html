@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hockey Prediction Tracker</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -299,6 +304,11 @@
 <body>
     <div class="container">
         <h1>🏒 Hockey Prediction Tracker</h1>
+        
+        <!-- Connection Status -->
+        <div id="connectionStatus" style="padding: 10px; margin-bottom: 20px; border-radius: 4px; text-align: center; font-weight: bold;">
+            <span id="statusText">Checking connection...</span>
+        </div>
 
         <!-- Add Player Section -->
         <div class="section">
@@ -424,14 +434,157 @@
             }
         });
 
-        // Simple data storage
+        // 🔥 REPLACE WITH YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMMXyw5JDmfegOryumN33bdZDuGNoIHQ4",
+            authDomain: "nhl-comp.firebaseapp.com",
+            projectId: "nhl-comp",
+            storageBucket: "nhl-comp.firebasestorage.app",
+            messagingSenderId: "224752575195",
+            appId: "1:224752575195:web:3f7f752be83aa50a1be2fe"
+        };
+
+        // Firebase initialization
+        let db = null;
+        let isFirebaseEnabled = false;
+
+        // Initialize Firebase
+        function initFirebase() {
+            try {
+                // Check if config is real (not placeholder)
+                if (firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    isFirebaseEnabled = true;
+                    console.log('Firebase connected successfully');
+                    updateStatus('🔥 Firebase Connected - Real-time sync enabled', '#28a745');
+                    return true;
+                } else {
+                    console.log('Firebase config not set - using localStorage');
+                    updateStatus('💾 Local Mode - Update Firebase config for sync', '#fd7e14');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Firebase initialization failed:', error);
+                updateStatus('⚠️ Firebase connection failed - Using local storage', '#dc3545');
+                return false;
+            }
+        }
+
+        // Update connection status
+        function updateStatus(message, color) {
+            const statusDiv = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+            statusText.textContent = message;
+            statusDiv.style.backgroundColor = color;
+            statusDiv.style.color = 'white';
+            
+            // Auto-hide success message
+            if (color === '#28a745') {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Data storage
         let players = [];
         let games = [];
         let predictions = [];
         let nextGameId = 1;
 
-        // Load data from localStorage
-        function loadData() {
+        // Load data (Firebase or localStorage)
+        async function loadData() {
+            try {
+                if (isFirebaseEnabled) {
+                    await loadFromFirebase();
+                } else {
+                    loadFromLocalStorage();
+                }
+            } catch (error) {
+                console.log('Error loading data, starting fresh:', error);
+                loadFromLocalStorage();
+            }
+        }
+
+        // Load from Firebase
+        async function loadFromFirebase() {
+            console.log('Loading data from Firebase...');
+            
+            // Load players
+            const playersSnapshot = await db.collection('players').get();
+            players = [];
+            playersSnapshot.forEach(doc => {
+                players.push(doc.data().name);
+            });
+
+            // Load games
+            const gamesSnapshot = await db.collection('games').orderBy('date').get();
+            games = [];
+            let maxId = 0;
+            gamesSnapshot.forEach(doc => {
+                const gameData = { ...doc.data(), firebaseId: doc.id };
+                gameData.date = gameData.date.toDate();
+                games.push(gameData);
+                if (gameData.id > maxId) maxId = gameData.id;
+            });
+            nextGameId = maxId + 1;
+
+            // Load predictions
+            const predictionsSnapshot = await db.collection('predictions').get();
+            predictions = [];
+            predictionsSnapshot.forEach(doc => {
+                predictions.push({ ...doc.data(), firebaseId: doc.id });
+            });
+
+            console.log('Firebase data loaded successfully');
+            setupRealtimeListeners();
+        }
+
+        // Set up real-time listeners
+        function setupRealtimeListeners() {
+            if (!isFirebaseEnabled) return;
+
+            console.log('Setting up real-time listeners...');
+
+            db.collection('players').onSnapshot(snapshot => {
+                players = [];
+                snapshot.forEach(doc => {
+                    players.push(doc.data().name);
+                });
+                updatePlayerSelects();
+                displayPlayers();
+                displayLeaderboard();
+            });
+
+            db.collection('games').onSnapshot(snapshot => {
+                games = [];
+                snapshot.forEach(doc => {
+                    const gameData = { ...doc.data(), firebaseId: doc.id };
+                    gameData.date = gameData.date.toDate();
+                    games.push(gameData);
+                });
+                games.sort((a, b) => new Date(a.date) - new Date(b.date));
+                updateGameSelects();
+                displayGames();
+                calculatePoints();
+                displayPredictions();
+                displayLeaderboard();
+            });
+
+            db.collection('predictions').onSnapshot(snapshot => {
+                predictions = [];
+                snapshot.forEach(doc => {
+                    predictions.push({ ...doc.data(), firebaseId: doc.id });
+                });
+                calculatePoints();
+                displayPredictions();
+                displayLeaderboard();
+            });
+        }
+
+        // Load from localStorage (fallback)
+        function loadFromLocalStorage() {
             try {
                 const savedPlayers = localStorage.getItem('hockeyPlayers');
                 const savedGames = localStorage.getItem('hockeyGames');
@@ -454,20 +607,30 @@
             }
         }
 
-        // Save data to localStorage
-        function saveData() {
+        // Save data (Firebase or localStorage)
+        async function saveData() {
+            if (isFirebaseEnabled) {
+                // Firebase handles saving automatically with real-time listeners
+                return;
+            } else {
+                saveToLocalStorage();
+            }
+        }
+
+        // Save to localStorage (fallback)
+        function saveToLocalStorage() {
             try {
                 localStorage.setItem('hockeyPlayers', JSON.stringify(players));
                 localStorage.setItem('hockeyGames', JSON.stringify(games));
                 localStorage.setItem('hockeyPredictions', JSON.stringify(predictions));
                 localStorage.setItem('hockeyNextId', nextGameId.toString());
             } catch (error) {
-                console.log('Unable to save data');
+                console.log('Unable to save data to localStorage');
             }
         }
 
         // Add a player
-        function addPlayer() {
+        async function addPlayer() {
             const name = document.getElementById('playerName').value.trim();
             
             if (!name) {
@@ -480,16 +643,25 @@
                 return;
             }
 
-            players.push(name);
-            document.getElementById('playerName').value = '';
-            
-            saveData();
-            updateDisplays();
-            alert('Player added successfully!');
+            try {
+                if (isFirebaseEnabled) {
+                    await db.collection('players').add({ name: name });
+                } else {
+                    players.push(name);
+                    saveToLocalStorage();
+                    updateDisplays();
+                }
+
+                document.getElementById('playerName').value = '';
+                alert('Player added successfully!');
+            } catch (error) {
+                console.error('Error adding player:', error);
+                alert('Error adding player: ' + error.message);
+            }
         }
 
         // Add a game
-        function addGame() {
+        async function addGame() {
             const homeTeam = document.getElementById('homeTeam').value.trim();
             const awayTeam = document.getElementById('awayTeam').value.trim();
             const gameDate = document.getElementById('gameDate').value;
@@ -500,7 +672,7 @@
             }
 
             const game = {
-                id: nextGameId++,
+                id: nextGameId,
                 homeTeam: homeTeam,
                 awayTeam: awayTeam,
                 date: new Date(gameDate),
@@ -509,20 +681,31 @@
                 awayScore: null
             };
 
-            games.push(game);
-            
-            // Clear form
-            document.getElementById('homeTeam').value = '';
-            document.getElementById('awayTeam').value = '';
-            document.getElementById('gameDate').value = '';
+            try {
+                if (isFirebaseEnabled) {
+                    await db.collection('games').add(game);
+                } else {
+                    games.push(game);
+                    saveToLocalStorage();
+                    updateDisplays();
+                }
 
-            saveData();
-            updateDisplays();
-            alert('Game added successfully!');
+                nextGameId++;
+                
+                // Clear form
+                document.getElementById('homeTeam').value = '';
+                document.getElementById('awayTeam').value = '';
+                document.getElementById('gameDate').value = '';
+
+                alert('Game added successfully!');
+            } catch (error) {
+                console.error('Error adding game:', error);
+                alert('Error adding game: ' + error.message);
+            }
         }
 
         // Submit a prediction
-        function submitPrediction() {
+        async function submitPrediction() {
             const player = document.getElementById('selectPlayer').value;
             const gameId = parseInt(document.getElementById('selectGame').value);
             const homeScore = parseInt(document.getElementById('homeScore').value);
@@ -533,9 +716,6 @@
                 return;
             }
 
-            // Check if prediction already exists
-            const existingIndex = predictions.findIndex(p => p.player === player && p.gameId === gameId);
-            
             const prediction = {
                 player: player,
                 gameId: gameId,
@@ -544,27 +724,55 @@
                 points: 0
             };
 
-            if (existingIndex >= 0) {
-                predictions[existingIndex] = prediction;
-                alert('Prediction updated!');
-            } else {
-                predictions.push(prediction);
-                alert('Prediction submitted!');
+            try {
+                if (isFirebaseEnabled) {
+                    // Check if prediction exists
+                    const existingQuery = await db.collection('predictions')
+                        .where('player', '==', player)
+                        .where('gameId', '==', gameId)
+                        .get();
+
+                    if (!existingQuery.empty) {
+                        // Update existing
+                        const docId = existingQuery.docs[0].id;
+                        await db.collection('predictions').doc(docId).update(prediction);
+                        alert('Prediction updated!');
+                    } else {
+                        // Add new
+                        await db.collection('predictions').add(prediction);
+                        alert('Prediction submitted!');
+                    }
+                } else {
+                    // localStorage mode
+                    const existingIndex = predictions.findIndex(p => p.player === player && p.gameId === gameId);
+                    
+                    if (existingIndex >= 0) {
+                        predictions[existingIndex] = prediction;
+                        alert('Prediction updated!');
+                    } else {
+                        predictions.push(prediction);
+                        alert('Prediction submitted!');
+                    }
+
+                    calculatePoints();
+                    saveToLocalStorage();
+                    updateDisplays();
+                }
+
+                // Clear form
+                document.getElementById('selectPlayer').value = '';
+                document.getElementById('selectGame').value = '';
+                document.getElementById('homeScore').value = '';
+                document.getElementById('awayScore').value = '';
+
+            } catch (error) {
+                console.error('Error submitting prediction:', error);
+                alert('Error submitting prediction: ' + error.message);
             }
-
-            // Clear form
-            document.getElementById('selectPlayer').value = '';
-            document.getElementById('selectGame').value = '';
-            document.getElementById('homeScore').value = '';
-            document.getElementById('awayScore').value = '';
-
-            calculatePoints();
-            saveData();
-            updateDisplays();
         }
 
         // Update game result
-        function updateGameResult() {
+        async function updateGameResult() {
             const gameId = parseInt(document.getElementById('selectGameResult').value);
             const homeScore = parseInt(document.getElementById('finalHomeScore').value);
             const awayScore = parseInt(document.getElementById('finalAwayScore').value);
@@ -574,21 +782,40 @@
                 return;
             }
 
-            const game = games.find(g => g.id === gameId);
-            if (game) {
-                game.homeScore = homeScore;
-                game.awayScore = awayScore;
-                game.status = 'completed';
+            try {
+                if (isFirebaseEnabled) {
+                    // Find and update the game
+                    const gameQuery = await db.collection('games').where('id', '==', gameId).get();
+                    if (!gameQuery.empty) {
+                        const gameDoc = gameQuery.docs[0];
+                        await gameDoc.ref.update({
+                            homeScore: homeScore,
+                            awayScore: awayScore,
+                            status: 'completed'
+                        });
+                    }
+                } else {
+                    // localStorage mode
+                    const game = games.find(g => g.id === gameId);
+                    if (game) {
+                        game.homeScore = homeScore;
+                        game.awayScore = awayScore;
+                        game.status = 'completed';
+                        calculatePoints();
+                        saveToLocalStorage();
+                        updateDisplays();
+                    }
+                }
 
                 // Clear form
                 document.getElementById('selectGameResult').value = '';
                 document.getElementById('finalHomeScore').value = '';
                 document.getElementById('finalAwayScore').value = '';
 
-                calculatePoints();
-                saveData();
-                updateDisplays();
                 alert('Game result updated!');
+            } catch (error) {
+                console.error('Error updating game result:', error);
+                alert('Error updating game result: ' + error.message);
             }
         }
 
@@ -798,17 +1025,24 @@
         }
 
         // Initialize app
-        function init() {
+        async function init() {
             try {
-                loadData();
+                updateStatus('Initializing...', '#6c757d');
+                
+                // Initialize Firebase
+                const firebaseReady = initFirebase();
+                
+                // Load data
+                await loadData();
+                
+                // Update displays
                 updateDisplays();
+                
                 console.log('Hockey tracker initialized successfully');
             } catch (error) {
-                console.log('Initialization error, starting fresh');
-                players = [];
-                games = [];
-                predictions = [];
-                nextGameId = 1;
+                console.log('Initialization error:', error);
+                updateStatus('⚠️ Error during initialization - Using local mode', '#dc3545');
+                loadFromLocalStorage();
                 updateDisplays();
             }
         }
