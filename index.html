@@ -366,6 +366,15 @@
                     <label for="awayScore">Away Team Score</label>
                     <input type="number" id="awayScore" min="0" placeholder="0">
                 </div>
+                <div class="input-group">
+                    <label for="bettingMark">Betting Mark (1X2)</label>
+                    <select id="bettingMark">
+                        <option value="">Auto (from scores)</option>
+                        <option value="1">1 (Home Win)</option>
+                        <option value="X">X (Tie)</option>
+                        <option value="2">2 (Away Win)</option>
+                    </select>
+                </div>
             </div>
             <button onclick="submitPrediction()">Submit Prediction</button>
         </div>
@@ -435,13 +444,13 @@
         });
 
         // 🔥 REPLACE WITH YOUR FIREBASE CONFIG
-        const firebaseConfig = {
-            apiKey: "AIzaSyBMMXyw5JDmfegOryumN33bdZDuGNoIHQ4",
-            authDomain: "nhl-comp.firebaseapp.com",
-            projectId: "nhl-comp",
-            storageBucket: "nhl-comp.firebasestorage.app",
-            messagingSenderId: "224752575195",
-            appId: "1:224752575195:web:3f7f752be83aa50a1be2fe"
+const firebaseConfig = {
+  apiKey: "AIzaSyBMMXyw5JDmfegOryumN33bdZDuGNoIHQ4",
+  authDomain: "nhl-comp.firebaseapp.com",
+  projectId: "nhl-comp",
+  storageBucket: "nhl-comp.firebasestorage.app",
+  messagingSenderId: "224752575195",
+  appId: "1:224752575195:web:3f7f752be83aa50a1be2fe"
         };
 
         // Firebase initialization
@@ -492,6 +501,23 @@
         let games = [];
         let predictions = [];
         let nextGameId = 1;
+
+        // Get betting mark from scores
+        function getBettingMark(homeScore, awayScore) {
+            if (homeScore > awayScore) return '1';
+            if (awayScore > homeScore) return '2';
+            return 'X';
+        }
+
+        // Format betting mark for display
+        function formatBettingMark(mark) {
+            switch(mark) {
+                case '1': return '1 (Home)';
+                case '2': return '2 (Away)';
+                case 'X': return 'X (Tie)';
+                default: return mark;
+            }
+        }
 
         // Load data (Firebase or localStorage)
         async function loadData() {
@@ -710,17 +736,22 @@
             const gameId = parseInt(document.getElementById('selectGame').value);
             const homeScore = parseInt(document.getElementById('homeScore').value);
             const awayScore = parseInt(document.getElementById('awayScore').value);
+            const bettingMark = document.getElementById('bettingMark').value;
 
             if (!player || !gameId || isNaN(homeScore) || isNaN(awayScore)) {
                 alert('Please fill in all fields');
                 return;
             }
 
+            // Use manual betting mark if provided, otherwise calculate from scores
+            const finalBettingMark = bettingMark || getBettingMark(homeScore, awayScore);
+
             const prediction = {
                 player: player,
                 gameId: gameId,
                 homeScore: homeScore,
                 awayScore: awayScore,
+                bettingMark: finalBettingMark,
                 points: 0
             };
 
@@ -764,6 +795,7 @@
                 document.getElementById('selectGame').value = '';
                 document.getElementById('homeScore').value = '';
                 document.getElementById('awayScore').value = '';
+                document.getElementById('bettingMark').value = '';
 
             } catch (error) {
                 console.error('Error submitting prediction:', error);
@@ -826,17 +858,13 @@
                 if (game && game.status === 'completed') {
                     let points = 0;
                     
-                    // 2 points for correct exact score
+                    // 2 points for each correct exact score
                     if (prediction.homeScore === game.homeScore) points += 2;
                     if (prediction.awayScore === game.awayScore) points += 2;
                     
-                    // 1 point for correct winner
-                    const predWinner = prediction.homeScore > prediction.awayScore ? 'home' : 
-                                      prediction.awayScore > prediction.homeScore ? 'away' : 'tie';
-                    const actualWinner = game.homeScore > game.awayScore ? 'home' : 
-                                        game.awayScore > game.homeScore ? 'away' : 'tie';
-                    
-                    if (predWinner === actualWinner) points += 1;
+                    // 1 point for correct betting mark (winner)
+                    const actualBettingMark = getBettingMark(game.homeScore, game.awayScore);
+                    if (prediction.bettingMark === actualBettingMark) points += 1;
                     
                     prediction.points = points;
                 } else {
@@ -951,6 +979,10 @@
                             <div>
                                 <strong>Predicted:</strong><br>
                                 ${prediction.homeScore} - ${prediction.awayScore}
+                            </div>
+                            <div class="betting-mark">
+                                <strong>Bet Mark:</strong><br>
+                                ${formatBettingMark(prediction.bettingMark)}
                             </div>
                             <div>
                                 <strong>Actual:</strong><br>
