@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hockey Tracker - Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .tab-btn { padding: 10px 20px; margin: 5px; background: #ccc; border: none; cursor: pointer; }
+        .tab-btn.active { background: #c41e3a; color: white; }
+        .tab-content { display: none; padding: 20px; border: 1px solid #ccc; margin-top: 10px; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <h1>🏒 Hockey Tracker - Debug Test</h1>
+    
+    <div>
+        <button class="tab-btn active" data-tab="manage" onclick="showTab('manage')">Manage</button>
+        <button class="tab-btn" data-tab="predict" onclick="showTab('predict')">Predict</button>
+        <button class="tab-btn" data-tab="view" onclick="showTab('view')">View</button>
+    </div>
+
+    <div id="manage" class="tab-content active">
+        <h2>Manage Tab</h2>
+        <p>This is the manage tab content.</p>
+    </div>
+
+    <div id="predict" class="tab-content">
+        <h2>Predict Tab</h2>
+        <p>This is the predict tab content.</p>
+    </div>
+
+    <div id="view" class="tab-content">
+        <h2>View Tab</h2>
+        <p>This is the view tab content.</p>
+    </div>
+
+    <script>
+        console.log('=== SCRIPT STARTING ===');
+        alert('JavaScript is loading!');
+        
+        function showTab(tabName) {
+            console.log('showTab called:', tabName);
+            alert('showTab called: ' + tabName);
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+        
+        window.showTab = showTab;
+        console.log('=== SCRIPT LOADED ===');
+        alert('Script fully loaded!');
+    </script>
+</body>
+</html>
