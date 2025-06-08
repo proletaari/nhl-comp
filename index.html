@@ -1,198 +1,4 @@
-<div class="container">
-        <div class="header">
-            <h1>🏒 Hockey Prediction Tracker</h1>
-            <div id="connectionStatus" class="status-bar">
-                <span id="statusText">Checking connection...</span>
-            </div>
-        </div>
-
-        <div class="main-content">
-            <div class="sidebar">
-                <div class="nav-tabs">
-                    <button class="tab-btn active" data-tab="manage" onclick="showTab('manage')">
-                        ⚙️ Manage
-                    </button>
-                    <button class="tab-btn" data-tab="predict" onclick="showTab('predict')">
-                        🎯 Predict
-                    </button>
-                    <button class="tab-btn" data-tab="results" onclick="showTab('results')">
-                        📊 Results
-                    </button>
-                    <button class="tab-btn" data-tab="view" onclick="showTab('view')">
-                        📋 View All
-                    </button>
-                    <button class="tab-btn" data-tab="leaderboard" onclick="showTab('leaderboard')">
-                        🏅 Leaderboard
-                    </button>
-                </div>
-            </div>
-
-            <div class="content-area">
-                <!-- Manage Tab -->
-                <div id="manage" class="tab-content active">
-                    <div class="section">
-                        <h2>👤 Add Player</h2>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label for="playerName">Player Name</label>
-                                <input type="text" id="playerName" placeholder="Enter player name">
-                            </div>
-                        </div>
-                        <button class="btn-primary" onclick="addPlayer()">Add Player</button>
-                    </div>
-
-                    <div class="section">
-                        <h2>🏒 Add Game</h2>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label for="homeTeam">Home Team</label>
-                                <input type="text" id="homeTeam" placeholder="Enter home team">
-                            </div>
-                            <div class="input-group">
-                                <label for="awayTeam">Away Team</label>
-                                <input type="text" id="awayTeam" placeholder="Enter away team">
-                            </div>
-                            <div class="input-group">
-                                <label for="gameDate">Game Date & Time</label>
-                                <input type="datetime-local" id="gameDate">
-                            </div>
-                        </div>
-                        <button class="btn-primary" onclick="addGame()">Add Game</button>
-                    </div>
-                </div>
-
-                <!-- Predict Tab -->
-                <div id="predict" class="tab-content">
-                    <div class="section">
-                        <h2>🎯 Submit Prediction</h2>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label for="selectPlayer">Select Player</label>
-                                <select id="selectPlayer">
-                                    <option value="">Choose a player</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="selectGame">Select Game</label>
-                                <select id="selectGame">
-                                    <option value="">Choose a game</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="homeScore">Home Team Score</label>
-                                <input type="number" id="homeScore" min="0" placeholder="0">
-                            </div>
-                            <div class="input-group">
-                                <label for="awayScore">Away Team Score</label>
-                                <input type="number" id="awayScore" min="0" placeholder="0">
-                            </div>
-                            <div class="input-group">
-                                <label for="bettingMark">Betting Mark (1X2)</label>
-                                <select id="bettingMark">
-                                    <option value="">Auto (from scores)</option>
-                                    <option value="1">1 (Home Win)</option>
-                                    <option value="X">X (Tie)</option>
-                                    <option value="2">2 (Away Win)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button class="btn-primary" onclick="submitPrediction()">Submit Prediction</button>
-                    </div>
-                </div>
-
-                <!-- Results Tab -->
-                <div id="results" class="tab-content">
-                    <div class="section">
-                        <h2>📊 Update Game Result</h2>
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <label for="selectGameResult">Select Game</label>
-                                <select id="selectGameResult">
-                                    <option value="">Choose a game</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label for="finalHomeScore        // Get betting mark from scores
-        function getBettingMark(homeScore, awayScore) {
-            if (homeScore > awayScore) return '1';
-            if (awayScore > homeScore) return '2';
-            return 'X';
-        }
-
-        // Format betting mark for display
-        function formatBettingMark(mark) {
-            switch(mark) {
-                case '1': return '1 (Home)';
-                case '2': return '2 (Away)';
-                case 'X': return 'X (Tie)';
-                default: return mark;
-            }
-        }
-
-        // Tab functionality with debugging
-        function showTab(tabName) {
-            console.log('Switching to tab:', tabName);
-            
-            // Hide all tab contents
-            const allTabs = document.querySelectorAll('.tab-content');
-            console.log('Found tab contents:', allTabs.length);
-            allTabs.forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active class from all tab buttons
-            const allBtns = document.querySelectorAll('.tab-btn');
-            console.log('Found tab buttons:', allBtns.length);
-            allBtns.forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab content
-            const targetTab = document.getElementById(tabName);
-            if (targetTab) {
-                targetTab.classList.add('active');
-                console.log('Activated tab:', tabName);
-            } else {
-                console.error('Tab not found:', tabName);
-            }
-            
-            // Activate selected tab button
-            const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
-            if (targetBtn) {
-                targetBtn.classList.add('active');
-                console.log('Activated button for:', tabName);
-            } else {
-                console.error('Button not found for tab:', tabName);
-            }
-        }
-
-        // Initialize tabs on page load
-        function initializeTabs() {
-            console.log('Initializing tabs...');
-            
-            // Add click event listeners to all tab buttons
-            const tabButtons = document.querySelectorAll('.tab-btn');
-            console.log('Found', tabButtons.length, 'tab buttons');
-            
-            tabButtons.forEach((btn, index) => {
-                const tabName = btn.getAttribute('data-tab');
-                console.log(`Button ${index}: ${tabName}`);
-                
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Tab button clicked:', tabName);
-                    showTab(tabName);
-                });
-            });
-            
-            // Ensure manage tab is active by default
-            setTimeout(() => {
-                showTab('manage');
-            }, 100);
-        }
-
-        // Also add global function for testing
-        window.showTab = showTab;<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -585,13 +391,6 @@
             font-style: italic;
         }
 
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
         /* Mobile Optimizations */
         @media (max-width: 1024px) {
             .main-content {
@@ -720,26 +519,122 @@
             outline: 2px solid #c41e3a;
             outline-offset: 2px;
         }
-
-        /* Loading states */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Success/Error states */
-        .success {
-            border-color: #28a745 !important;
-            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1) !important;
-        }
-
-        .error {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
-        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="header">
+            <h1>🏒 Hockey Prediction Tracker</h1>
+            <div id="connectionStatus" class="status-bar">
+                <span id="statusText">Checking connection...</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="nav-tabs">
+                    <button class="tab-btn active" data-tab="manage" onclick="showTab('manage')">
+                        ⚙️ Manage
+                    </button>
+                    <button class="tab-btn" data-tab="predict" onclick="showTab('predict')">
+                        🎯 Predict
+                    </button>
+                    <button class="tab-btn" data-tab="results" onclick="showTab('results')">
+                        📊 Results
+                    </button>
+                    <button class="tab-btn" data-tab="view" onclick="showTab('view')">
+                        📋 View All
+                    </button>
+                    <button class="tab-btn" data-tab="leaderboard" onclick="showTab('leaderboard')">
+                        🏅 Leaderboard
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Manage Tab -->
+                <div id="manage" class="tab-content active">
+                    <div class="section">
+                        <h2>👤 Add Player</h2>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="playerName">Player Name</label>
+                                <input type="text" id="playerName" placeholder="Enter player name">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="addPlayer()">Add Player</button>
+                    </div>
+
+                    <div class="section">
+                        <h2>🏒 Add Game</h2>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="homeTeam">Home Team</label>
+                                <input type="text" id="homeTeam" placeholder="Enter home team">
+                            </div>
+                            <div class="input-group">
+                                <label for="awayTeam">Away Team</label>
+                                <input type="text" id="awayTeam" placeholder="Enter away team">
+                            </div>
+                            <div class="input-group">
+                                <label for="gameDate">Game Date & Time</label>
+                                <input type="datetime-local" id="gameDate">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="addGame()">Add Game</button>
+                    </div>
+                </div>
+
+                <!-- Predict Tab -->
+                <div id="predict" class="tab-content">
+                    <div class="section">
+                        <h2>🎯 Submit Prediction</h2>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="selectPlayer">Select Player</label>
+                                <select id="selectPlayer">
+                                    <option value="">Choose a player</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="selectGame">Select Game</label>
+                                <select id="selectGame">
+                                    <option value="">Choose a game</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="homeScore">Home Team Score</label>
+                                <input type="number" id="homeScore" min="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="awayScore">Away Team Score</label>
+                                <input type="number" id="awayScore" min="0" placeholder="0">
+                            </div>
+                            <div class="input-group">
+                                <label for="bettingMark">Betting Mark (1X2)</label>
+                                <select id="bettingMark">
+                                    <option value="">Auto (from scores)</option>
+                                    <option value="1">1 (Home Win)</option>
+                                    <option value="X">X (Tie)</option>
+                                    <option value="2">2 (Away Win)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="submitPrediction()">Submit Prediction</button>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div id="results" class="tab-content">
+                    <div class="section">
+                        <h2>📊 Update Game Result</h2>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label for="selectGameResult">Select Game</label>
+                                <select id="selectGameResult">
+                                    <option value="">Choose a game</option>
+                                </select>
+                            </div>
                             <div class="input-group">
                                 <label for="finalHomeScore">Home Team Final Score</label>
                                 <input type="number" id="finalHomeScore" min="0" placeholder="0">
@@ -791,62 +686,6 @@
     </div>
 
     <script>
-        console.log('Script starting to load...');
-
-        // Suppress generic script errors
-        window.addEventListener('error', function(e) {
-            if (e.message === 'Script error.' || e.message === '' || !e.error) {
-                e.preventDefault();
-                return false;
-            }
-        });
-
-        console.log('Error handler set...');
-
-        // Tab functionality - FIRST PRIORITY
-        function showTab(tabName) {
-            console.log('showTab called with:', tabName);
-            
-            try {
-                // Hide all tab contents
-                const allTabs = document.querySelectorAll('.tab-content');
-                allTabs.forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                
-                // Remove active class from all tab buttons
-                const allBtns = document.querySelectorAll('.tab-btn');
-                allBtns.forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                
-                // Show selected tab content
-                const targetTab = document.getElementById(tabName);
-                if (targetTab) {
-                    targetTab.classList.add('active');
-                }
-                
-                // Activate selected tab button
-                const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
-                if (targetBtn) {
-                    targetBtn.classList.add('active');
-                }
-                
-                console.log('Tab switched to:', tabName);
-            } catch (error) {
-                console.error('Error in showTab:', error);
-            }
-        }
-
-        // Make function globally available immediately
-        window.showTab = showTab;
-
-        console.log('showTab function defined and made global');
-
-        // Test the function exists
-        console.log('typeof showTab:', typeof showTab);
-        console.log('typeof window.showTab:', typeof window.showTab);
-
         // Firebase config and initialization
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
@@ -903,8 +742,6 @@
         let predictions = [];
         let nextGameId = 1;
 
-        console.log('Data variables initialized');
-
         // Get betting mark from scores
         function getBettingMark(homeScore, awayScore) {
             if (homeScore > awayScore) return '1';
@@ -919,6 +756,31 @@
                 case '2': return '2 (Away)';
                 case 'X': return 'X (Tie)';
                 default: return mark;
+            }
+        }
+
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Activate selected tab button
+            const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
             }
         }
 
@@ -1467,7 +1329,7 @@
                 updateStatus('Initializing...', '#6c757d');
                 
                 // Initialize Firebase
-                const firebaseReady = initFirebase();
+                initFirebase();
                 
                 // Load data
                 await loadData();
@@ -1475,16 +1337,12 @@
                 // Update displays
                 updateDisplays();
                 
-                // Initialize tab functionality
-                initializeTabs();
-                
                 console.log('Hockey tracker initialized successfully');
             } catch (error) {
                 console.log('Initialization error:', error);
                 updateStatus('⚠️ Error during initialization - Using local mode', '#dc3545');
                 loadFromLocalStorage();
                 updateDisplays();
-                initializeTabs();
             }
         }
 
