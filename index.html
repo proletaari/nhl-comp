@@ -9,19 +9,19 @@
         <div class="main-content">
             <div class="sidebar">
                 <div class="nav-tabs">
-                    <button class="tab-btn active" onclick="showTab('manage')" data-tab="manage">
+                    <button class="tab-btn active" data-tab="manage">
                         ⚙️ Manage
                     </button>
-                    <button class="tab-btn" onclick="showTab('predict')" data-tab="predict">
+                    <button class="tab-btn" data-tab="predict">
                         🎯 Predict
                     </button>
-                    <button class="tab-btn" onclick="showTab('results')" data-tab="results">
+                    <button class="tab-btn" data-tab="results">
                         📊 Results
                     </button>
-                    <button class="tab-btn" onclick="showTab('view')" data-tab="view">
+                    <button class="tab-btn" data-tab="view">
                         📋 View All
                     </button>
-                    <button class="tab-btn" onclick="showTab('leaderboard')" data-tab="leaderboard">
+                    <button class="tab-btn" data-tab="leaderboard">
                         🏅 Leaderboard
                     </button>
                 </div>
@@ -142,10 +142,30 @@
             });
             
             // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
+            const targetTab = document.getElementById(tabName);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
             
             // Activate selected tab button
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+        }
+
+        // Initialize tabs on page load
+        function initializeTabs() {
+            // Ensure manage tab is active by default
+            showTab('manage');
+            
+            // Add click event listeners to all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    showTab(tabName);
+                });
+            });
         }<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1382,12 +1402,16 @@
                 // Update displays
                 updateDisplays();
                 
+                // Initialize tab functionality
+                initializeTabs();
+                
                 console.log('Hockey tracker initialized successfully');
             } catch (error) {
                 console.log('Initialization error:', error);
                 updateStatus('⚠️ Error during initialization - Using local mode', '#dc3545');
                 loadFromLocalStorage();
                 updateDisplays();
+                initializeTabs();
             }
         }
 
