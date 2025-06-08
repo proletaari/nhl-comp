@@ -791,6 +791,8 @@
     </div>
 
     <script>
+        console.log('Script starting to load...');
+
         // Suppress generic script errors
         window.addEventListener('error', function(e) {
             if (e.message === 'Script error.' || e.message === '' || !e.error) {
@@ -799,7 +801,53 @@
             }
         });
 
-        // 🔥 REPLACE WITH YOUR FIREBASE CONFIG
+        console.log('Error handler set...');
+
+        // Tab functionality - FIRST PRIORITY
+        function showTab(tabName) {
+            console.log('showTab called with:', tabName);
+            
+            try {
+                // Hide all tab contents
+                const allTabs = document.querySelectorAll('.tab-content');
+                allTabs.forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Remove active class from all tab buttons
+                const allBtns = document.querySelectorAll('.tab-btn');
+                allBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const targetTab = document.getElementById(tabName);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+                
+                // Activate selected tab button
+                const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                }
+                
+                console.log('Tab switched to:', tabName);
+            } catch (error) {
+                console.error('Error in showTab:', error);
+            }
+        }
+
+        // Make function globally available immediately
+        window.showTab = showTab;
+
+        console.log('showTab function defined and made global');
+
+        // Test the function exists
+        console.log('typeof showTab:', typeof showTab);
+        console.log('typeof window.showTab:', typeof window.showTab);
+
+        // Firebase config and initialization
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -809,15 +857,12 @@
             appId: "YOUR_APP_ID"
         };
 
-        // Firebase initialization
         let db = null;
         let isFirebaseEnabled = false;
 
-        // Initialize Firebase
         function initFirebase() {
             try {
-                // Check if config is real (not placeholder)
-                if (firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
+                if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.projectId !== "YOUR_PROJECT_ID") {
                     firebase.initializeApp(firebaseConfig);
                     db = firebase.firestore();
                     isFirebaseEnabled = true;
@@ -836,19 +881,19 @@
             }
         }
 
-        // Update connection status
         function updateStatus(message, color) {
             const statusDiv = document.getElementById('connectionStatus');
             const statusText = document.getElementById('statusText');
-            statusText.textContent = message;
-            statusDiv.style.backgroundColor = color;
-            statusDiv.style.color = 'white';
-            
-            // Auto-hide success message
-            if (color === '#28a745') {
-                setTimeout(() => {
-                    statusDiv.style.display = 'none';
-                }, 5000);
+            if (statusDiv && statusText) {
+                statusText.textContent = message;
+                statusDiv.style.backgroundColor = color;
+                statusDiv.style.color = 'white';
+                
+                if (color === '#28a745') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
             }
         }
 
@@ -857,6 +902,8 @@
         let games = [];
         let predictions = [];
         let nextGameId = 1;
+
+        console.log('Data variables initialized');
 
         // Get betting mark from scores
         function getBettingMark(homeScore, awayScore) {
